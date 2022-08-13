@@ -29,3 +29,44 @@
 
     on-screen clickable rune enchantments.
 ]]
+
+_addon.name = "Rune Helper"
+_addon.author = "rjt"
+_addon.version = "1.0"
+_addon.commands = { "rune", "rh" }
+
+config = require('config')
+images = require('images')
+
+defaults = {
+    orient = 'v',
+
+    pos_x = -100,
+    pos_y = -100,
+
+    textmode = false,
+    resist_colour = true
+}
+settings = config.load(defaults)
+
+rune_enchantment = {
+    Ignis = { element = 'fire', resist = 'ice' },
+    Gelus = { element = 'ice', resist = 'wind' },
+    Flabra = { element = 'wind', resist = 'stone' },
+    Tellus = { element = 'stone', resist = 'thunder' },
+    Sulpor = { element = 'thunder', resist = 'water' },
+    Unda = { element = 'water', resist = 'fire' },
+    Lux = { element = 'light', resist = 'dark' },
+    Tenebrae = { element = 'dark', resist = 'light' }
+}
+
+element_colour = {
+    fire = 'f54242',
+    ice = '42d1f5',
+    wind = '22c928',
+    stone = 'c4c922',
+    thunder = 'c922b3',
+    water = '2b22c9',
+    light = 'dfe6e5',
+    dark = '292929'
+}
