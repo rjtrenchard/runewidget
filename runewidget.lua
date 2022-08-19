@@ -37,13 +37,16 @@ _addon.commands = { "rune", "rh" }
 
 config = require('config')
 images = require('images')
-require('table')
+require('tables')
+primes = require('prims')
 
 defaults = {
     orient = 'v',
 
     pos_x = -100,
     pos_y = -100,
+
+    size = 32, -- pixel size
 
     textmode = false,
     resist_colour = true
@@ -62,27 +65,32 @@ rune_enchantment = T {
 }
 
 element_colour = {
-    fire = 'f54242',
-    ice = '42d1f5',
-    wind = '22c928',
-    stone = 'c4c922',
-    thunder = 'c922b3',
-    water = '2b22c9',
-    light = 'dfe6e5',
-    dark = '292929'
+    fire = 'f54242', -- 245, 66, 66
+    ice = '42d1f5', -- 66, 209, 245
+    wind = '22c928', -- 34, 201, 40
+    stone = 'c4c922', -- 196, 201, 34
+    thunder = 'c922b3', -- 201, 34, 179
+    water = '2b22c9', -- 43, 34, 201
+    light = 'dfe6e5', -- 223, 230, 229
+    dark = '292929' -- 41, 41, 41
 }
 
 do
     local rune_base = {
         color = { alpha = 255 },
         texture = { fit = false },
-        draggable = false
+        draggable = false,
     }
-    local drag_base = {
+
+    drag_image = {
         color = { alpha = 255 },
         texture = { fit = false },
-        draggable = false
+        draggable = true,
+
     }
+
+
+
     rune_image = T { ignis, gelus, flabra, tellus, sulpor, unda, lux, tenebrae }
     rune_image.ignis = images.new(rune_base)
     rune_image.gelus = images.new(rune_base)
@@ -92,5 +100,21 @@ do
     rune_image.unda = images.new(rune_base)
     rune_image.lux = images.new(rune_base)
     rune_image.tenebrae = images.new(rune_base)
+
+    for i, img in ipairs(rune_image) do
+        img:size(settings.size, settings.size)
+        img:transparency(0)
+        img:pos_x(settings.pos_x)
+        img:pos_y(settings.pos_y + i * settings.size)
+        img:show()
+        img:register_event('left_click', function()
+            windower.add_to_chat(144, 'click test')
+        end)
+    end
+
     drag_image = images.new(drag_base)
 end
+
+windower.register_event('load', function()
+
+end)
