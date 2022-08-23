@@ -49,9 +49,11 @@ defaults = {
     spacing = 3, -- spacing between icons in px
 
     textmode = false,
-    resist_colour = true
+    resist_colour = true,
+    draggable = true
 }
 settings = config.load(defaults)
+dragging = false
 
 rune_enchantment = T {
     ignis = { element = 'fire', resist = 'ice' },
@@ -108,53 +110,20 @@ end
 
 rune_image = T {}
 
-do
-    local rune_base = {
-        color = { alpha = 255 },
-        texture = { fit = false },
-        draggable = false,
-    }
+-- do
+--     local rune_base = {
+--         color = { alpha = 255 },
+--         texture = { fit = false },
+--         draggable = false,
+--     }
 
-    local drag_image = {
-        color = { red = 100, blue = 100, green = 100, alpha = 50 },
-        texture = { fit = true },
-        draggable = true,
+--     local rune_names = { 'ignis', 'gelus', 'flabra', 'tellus', 'sulpor', 'unda', 'lux', 'tenebrae' }
 
-    }
-
-    -- maybe use an array?
-    local rune_names = { 'ignis', 'gelus', 'flabra', 'tellus', 'sulpor', 'unda', 'lux', 'tenebrae' }
-    for i, rune in ipairs(rune_names) do
-        rune_image:append(rune)
-
-        rune_image[rune] = images.new(rune_base)
-
-        rune_image[rune]:path(element_image[rune_enchantment[rune].element])
-        -- rune_image[rune]:color(rune_colour[rune].r, rune_colour[rune].g, rune_colour[rune].b)
-        rune_image[rune]:transparency(0)
-        rune_image[rune]:size(settings.size, settings.size)
-        rune_image[rune]:pos_x(settings.pos_x + orientation.x * i * (settings.size + settings.spacing))
-        rune_image[rune]:pos_y(settings.pos_y + orientation.y * i * (settings.size + settings.spacing))
-        rune_image[rune]:show()
-
-    end
-end
-windower.register_event('mouse', function(type, x, y, delta, blocked)
-    if blocked then return end
-
-    if type == 1 then
-        if check_hover(x, y) ~= 'none' then
-            return true
-        end
-    elseif type == 2 then
-
-
-        if check_hover(x, y) ~= 'none' then
-            return true
-        end
-    end
-    return false
-end)
+--     for i, rune in ipairs(rune_names) do
+--         rune_image:append(rune)
+--         rune_image[rune] = images.new(rune_base)
+--     end
+-- end
 
 -- check if hovering over a rune
 function check_hover(x, y)
@@ -172,3 +141,114 @@ function check_hover(x, y)
     return 'none'
 
 end
+
+function flip_orient()
+    if settings.orient == 'v' then settings.orient = 'h' else settings.orient = 'v' end
+    if settings.orient == 'v' then
+        orientation.x = 0
+        orientation.y = 1
+    else
+        orientation.x = 1
+        orientation.y = 0
+    end
+end
+
+function update_images(show, x, y)
+
+    if show == nil then show = true end
+    if x then settings.pos_x = x end
+    if y then settings.pos_y = y end
+
+    local resist
+    if settings.resist_colour then resist = 'resist' else resist = 'element' end
+
+    if show then
+        for i, rune in ipairs(rune_image) do
+            rune_image[rune]:path(element_image[rune_enchantment[rune].resist])
+            -- rune_image[rune]:color(rune_colour[rune].r, rune_colour[rune].g, rune_colour[rune].b)
+            rune_image[rune]:transparency(0)
+            rune_image[rune]:size(settings.size, settings.size)
+            rune_image[rune]:pos_x(settings.pos_x + orientation.x * i * (settings.size + settings.spacing))
+            rune_image[rune]:pos_y(settings.pos_y + orientation.y * i * (settings.size + settings.spacing))
+            rune_image[rune]:show()
+        end
+    else
+        for i, rune in ipairs(rune_image) do
+            rune_image[rune]:clear()
+            rune_image[rune]:hide()
+        end
+    end
+
+
+end
+
+windower.register_event('load', function()
+    local rune_base = {
+        color = { alpha = 255 },
+        texture = { fit = false },
+        draggable = false,
+    }
+
+    local rune_names = { 'ignis', 'gelus', 'flabra', 'tellus', 'sulpor', 'unda', 'lux', 'tenebrae' }
+
+    for i, rune in ipairs(rune_names) do
+        rune_image:append(rune)
+        rune_image[rune] = images.new(rune_base)
+    end
+    update_images()
+end)
+
+
+windower.register_event('mouse', function(type, x, y, delta, blocked)
+    if blocked then return end
+
+    -- no button
+    if type == 0 then
+        if dragging == true then
+            update_images(true, x - settings.size / 2, y - settings.size / 2)
+            return true
+        end
+        -- lmb down
+    elseif type == 1 then
+        if check_hover(x, y) ~= 'none' then
+            return true
+        end
+
+        -- lmb up
+    elseif type == 2 then
+        if check_hover(x, y) ~= 'none' then
+            windower.send_command('input /ja ' .. check_hover(x, y) .. ' <me>')
+            return true
+        end
+
+        -- rmb down
+    elseif type == 4 then
+        if check_hover(x, y) ~= 'none' and settings.draggable then
+            dragging = true
+            return true
+        end
+
+
+        -- rmb up
+    elseif type == 5 then
+        if settings.draggable and dragging then
+            dragging = false
+            config.save(settings)
+            return true
+        end
+
+        -- elseif type == 7 then
+        --     flip_orient()
+        --     update_images()
+        --     return true
+    end
+
+    -- if type ~= 0 then
+    --     windower.add_to_chat(144, type)
+    -- end
+    return false
+end)
+
+windower.register_event('addon command', function(...)
+
+end)
