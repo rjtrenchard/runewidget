@@ -38,15 +38,15 @@ _addon.commands = { "rune", "rh" }
 config = require('config')
 images = require('images')
 require('tables')
-primes = require('prims')
 
 defaults = {
     orient = 'v',
 
-    pos_x = -100,
-    pos_y = -100,
+    pos_x = 100,
+    pos_y = 100,
 
     size = 32, -- pixel size
+    spacing = 3, -- spacing between icons in px
 
     textmode = false,
     resist_colour = true
@@ -56,24 +56,57 @@ settings = config.load(defaults)
 rune_enchantment = T {
     ignis = { element = 'fire', resist = 'ice' },
     gelus = { element = 'ice', resist = 'wind' },
-    flabra = { element = 'wind', resist = 'stone' },
-    tellus = { element = 'stone', resist = 'thunder' },
-    sulpor = { element = 'thunder', resist = 'water' },
+    flabra = { element = 'wind', resist = 'earth' },
+    tellus = { element = 'earth', resist = 'lightning' },
+    sulpor = { element = 'lightning', resist = 'water' },
     unda = { element = 'water', resist = 'fire' },
     lux = { element = 'light', resist = 'dark' },
     tenebrae = { element = 'dark', resist = 'light' }
 }
 
-element_colour = {
-    fire = 'f54242', -- 245, 66, 66
-    ice = '42d1f5', -- 66, 209, 245
-    wind = '22c928', -- 34, 201, 40
-    stone = 'c4c922', -- 196, 201, 34
-    thunder = 'c922b3', -- 201, 34, 179
-    water = '2b22c9', -- 43, 34, 201
-    light = 'dfe6e5', -- 223, 230, 229
-    dark = '292929' -- 41, 41, 41
-}
+orientation = {}
+if settings.orient == 'v' then
+    orientation.x = 0
+    orientation.y = 1
+else
+    orientation.x = 1
+    orientation.y = 0
+end
+
+-- element_colour = T {
+--     fire = { r = 245, g = 66, b = 66 },
+--     ice = { r = 66, g = 209, b = 245 },
+--     wind = { r = 34, g = 201, b = 40 },
+--     earth = { r = 196, g = 201, b = 34 },
+--     lightning = { r = 201, g = 34, b = 179 },
+--     water = { r = 43, g = 34, b = 201 },
+--     light = { r = 223, g = 230, b = 229 },
+--     dark = { r = 41, g = 41, b = 41 }
+-- }
+
+element_image = T {}
+element_image.fire = windower.addon_path .. '/img/Fire-Icon.png'
+element_image.ice = windower.addon_path .. '/img/Ice-Icon.png'
+element_image.wind = windower.addon_path .. '/img/Wind-Icon.png'
+element_image.earth = windower.addon_path .. '/img/Earth-Icon.png'
+element_image.lightning = windower.addon_path .. '/img/Lightning-Icon.png'
+element_image.water = windower.addon_path .. '/img/Water-Icon.png'
+element_image.light = windower.addon_path .. '/img/Light-Icon.png'
+element_image.dark = windower.addon_path .. '/img/Dark-Icon.png'
+
+rune_colour = T {}
+if settings.resist_colour then
+    for i, rune in ipairs(rune_enchantment) do
+        windower.add_to_chat(144, rune)
+        rune_colour[rune] = element_colour[rune_enchantment.resist]
+    end
+else
+    for i, rune in ipairs(rune_enchantment) do
+        rune_colour[rune] = element_colour[rune_enchantment.element]
+    end
+end
+
+rune_image = T {}
 
 do
     local rune_base = {
@@ -82,39 +115,60 @@ do
         draggable = false,
     }
 
-    drag_image = {
-        color = { alpha = 255 },
-        texture = { fit = false },
+    local drag_image = {
+        color = { red = 100, blue = 100, green = 100, alpha = 50 },
+        texture = { fit = true },
         draggable = true,
 
     }
 
+    -- maybe use an array?
+    local rune_names = { 'ignis', 'gelus', 'flabra', 'tellus', 'sulpor', 'unda', 'lux', 'tenebrae' }
+    for i, rune in ipairs(rune_names) do
+        rune_image:append(rune)
 
+        rune_image[rune] = images.new(rune_base)
 
-    rune_image = T { ignis, gelus, flabra, tellus, sulpor, unda, lux, tenebrae }
-    rune_image.ignis = images.new(rune_base)
-    rune_image.gelus = images.new(rune_base)
-    rune_image.flabra = images.new(rune_base)
-    rune_image.tellus = images.new(rune_base)
-    rune_image.sulpor = images.new(rune_base)
-    rune_image.unda = images.new(rune_base)
-    rune_image.lux = images.new(rune_base)
-    rune_image.tenebrae = images.new(rune_base)
+        rune_image[rune]:path(element_image[rune_enchantment[rune].element])
+        -- rune_image[rune]:color(rune_colour[rune].r, rune_colour[rune].g, rune_colour[rune].b)
+        rune_image[rune]:transparency(0)
+        rune_image[rune]:size(settings.size, settings.size)
+        rune_image[rune]:pos_x(settings.pos_x + orientation.x * i * (settings.size + settings.spacing))
+        rune_image[rune]:pos_y(settings.pos_y + orientation.y * i * (settings.size + settings.spacing))
+        rune_image[rune]:show()
 
-    for i, img in ipairs(rune_image) do
-        img:size(settings.size, settings.size)
-        img:transparency(0)
-        img:pos_x(settings.pos_x)
-        img:pos_y(settings.pos_y + i * settings.size)
-        img:show()
-        img:register_event('left_click', function()
-            windower.add_to_chat(144, 'click test')
-        end)
     end
-
-    drag_image = images.new(drag_base)
 end
+windower.register_event('mouse', function(type, x, y, delta, blocked)
+    if blocked then return end
 
-windower.register_event('load', function()
+    if type == 1 then
+        if check_hover(x, y) ~= 'none' then
+            return true
+        end
+    elseif type == 2 then
 
+
+        if check_hover(x, y) ~= 'none' then
+            return true
+        end
+    end
+    return false
 end)
+
+-- check if hovering over a rune
+function check_hover(x, y)
+
+    for k, v in ipairs(rune_image) do
+        local begin_x = settings.pos_x + orientation.x * k * (settings.size + settings.spacing)
+        local end_x = settings.pos_x + orientation.x * k * (settings.size + settings.spacing) + settings.size
+        local begin_y = settings.pos_y + orientation.y * k * (settings.size + settings.spacing)
+        local end_y = settings.pos_y + orientation.y * k * (settings.size + settings.spacing) + settings.size
+        -- windower.add_to_chat(144, '(' .. begin_x .. ',' .. end_x .. '),(' .. begin_y .. ',' .. end_y .. ')')
+        if x >= begin_x and x <= end_x and y >= begin_y and y <= end_y then
+            return v
+        end
+    end
+    return 'none'
+
+end
