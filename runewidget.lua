@@ -48,7 +48,7 @@ defaults = {
     size = 32, -- pixel size
     spacing = 3, -- spacing between icons in px
 
-    textmode = false,
+    -- textmode = false,
     resist_colour = true,
     draggable = true
 }
@@ -65,15 +65,6 @@ rune_enchantment = T {
     lux = { element = 'light', resist = 'dark' },
     tenebrae = { element = 'dark', resist = 'light' }
 }
-
-orientation = {}
-if settings.orient == 'v' then
-    orientation.x = 0
-    orientation.y = 1
-else
-    orientation.x = 1
-    orientation.y = 0
-end
 
 -- element_colour = T {
 --     fire = { r = 245, g = 66, b = 66 },
@@ -142,8 +133,8 @@ function check_hover(x, y)
 
 end
 
-function flip_orient()
-    if settings.orient == 'v' then settings.orient = 'h' else settings.orient = 'v' end
+orientation = {}
+function set_orient()
     if settings.orient == 'v' then
         orientation.x = 0
         orientation.y = 1
@@ -151,6 +142,11 @@ function flip_orient()
         orientation.x = 1
         orientation.y = 0
     end
+end
+
+function flip_orient()
+    if settings.orient == 'v' then settings.orient = 'h' else settings.orient = 'v' end
+    set_orient()
 end
 
 function update_images(show, x, y)
@@ -178,8 +174,6 @@ function update_images(show, x, y)
             rune_image[rune]:hide()
         end
     end
-
-
 end
 
 windower.register_event('load', function()
@@ -195,12 +189,18 @@ windower.register_event('load', function()
         rune_image:append(rune)
         rune_image[rune] = images.new(rune_base)
     end
+
+    set_orient()
     update_images()
+
 end)
 
 
+
 windower.register_event('mouse', function(type, x, y, delta, blocked)
-    if blocked then return end
+    if blocked then
+        return
+    end
 
     -- no button
     if type == 0 then
@@ -250,5 +250,65 @@ windower.register_event('mouse', function(type, x, y, delta, blocked)
 end)
 
 windower.register_event('addon command', function(...)
+    local args = T { ... }
+
+    local function write(...)
+        for i, v in ipairs(...) do
+            windower.add_to_chat(144, v)
+        end
+    end
+
+    local function show_help()
+        write(
+            'runewidget commands:',
+            '  lock - lock widget position',
+            '  right mouse - drags the widget if not locked',
+            '  size [n] - set icon size in px',
+            '  mode - changes icons to display ability element or resistance element',
+            '  orient - changes orientation')
+    end
+
+    if args[0] then
+
+        args[0] = args[0]:lower()
+
+        if arg[0] == 'lock' then
+            settings.draggable = not settings.draggable
+            update_images()
+            config.save(settings)
+
+        elseif arg[0] == 'size' then
+            if arg[1] and tonumber(arg[1]) then
+                settings.size = tonumber(arg[1])
+            else
+                error('unknown argument')
+                return
+            end
+
+        elseif arg[0] == 'mode' then
+            settings.resist_colour = not settings.resist_colour
+            if settings.resist_colour then
+                write('runewidget: icons now display the resisting element.')
+            else
+                write('runewidget: icons now display the abilities element.')
+            end
+            update_images()
+            config.save(settings)
+
+        elseif arg[0] == 'orient' then
+            flip_orient()
+            update_images()
+            config.save(settings)
+
+            -- elseif arg[0] == 'text' then
+            -- elseif arg[0] == 'save' then
+
+        else
+            show_help()
+        end
+
+    else
+        show_help()
+    end
 
 end)
