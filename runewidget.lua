@@ -265,7 +265,8 @@ windower.register_event('addon command', function(command, ...)
             '  mode - changes icons to display ability element or resistance element',
             '  orient - changes orientation',
             '  reset - resets display to defaults (does not save)',
-            '  save - saves settings', '',
+            '  save - saves settings',
+            ' ',
             '  right mouse - drags the widget if not locked')
     end
 
