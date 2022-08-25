@@ -37,6 +37,7 @@ _addon.commands = { "rune", "rw" }
 
 config = require('config')
 images = require('images')
+res = require('resources')
 require('tables')
 
 defaults = {
@@ -55,6 +56,7 @@ defaults = {
 settings = config.load(defaults)
 dragging = false
 ignore_job = false
+legal_job = false
 
 rune_enchantment = T {
     ignis = { element = 'fire', resist = 'ice' },
@@ -180,13 +182,7 @@ function update_images(show, x, y)
 end
 
 function is_legal_job()
-    local main = windower.ffxi.get_player().main_job
-    local sub = windower.ffxi.get_player().sub_job
-
-
-    if main == 'RUN'
-        or sub == 'RUN'
-        or ignore_job then return true
+    if legal_job or ignore_job then return true
     else return false end
 end
 
@@ -204,11 +200,27 @@ windower.register_event('load', function()
         rune_image[rune] = images.new(rune_base)
     end
 
+    local player = windower.ffxi.get_player()
+    if player.main_job == 'RUN' or player.sub_job == 'RUN' then
+        legal_job = true
+    else
+        legal_job = false
+    end
+
     set_orient()
     update_images()
 
 end)
 
+windower.register_event('job change', function(mid, mlvl, sid, slvl)
+    if res.jobs[mid].english_short == 'RUN' or res.jobs[sid].english_short == 'RUN' then
+        legal_job = true
+    else
+        legal_job = false
+    end
+
+    update_images()
+end)
 
 
 windower.register_event('mouse', function(type, x, y, delta, blocked)
