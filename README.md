@@ -1,6 +1,7 @@
 ##RUNEWIDGET
 
 An on-screen clickable widget for using rune enchantments.
+Sleeps if not on rune fencer.
 
 Version: 1.0
 Author: rjt
@@ -12,6 +13,7 @@ Commands:
 - size [n]: sets the size of the widget icons in pixels
 - mode: changes icons to display ability element or resistance element
 - orient: changes orientation
+- show: shows the widget regardless of job.
 - reset: resets to factory default settings, does not save.
 - save: saves settings
 

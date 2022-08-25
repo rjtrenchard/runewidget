@@ -54,6 +54,7 @@ defaults = {
 }
 settings = config.load(defaults)
 dragging = false
+ignore_job = false
 
 rune_enchantment = T {
     ignis = { element = 'fire', resist = 'ice' },
@@ -119,6 +120,7 @@ rune_image = T {}
 -- check if hovering over a rune
 function check_hover(x, y)
 
+    if not is_legal_job() then return 'none' end
     for k, v in ipairs(rune_image) do
         local begin_x = settings.pos_x + orientation.x * k * (settings.size + settings.spacing)
         local end_x = settings.pos_x + orientation.x * k * (settings.size + settings.spacing) + settings.size
@@ -152,6 +154,7 @@ end
 function update_images(show, x, y)
 
     if show == nil then show = true end
+    if not is_legal_job() then show = false end
     if x then settings.pos_x = x end
     if y then settings.pos_y = y end
 
@@ -174,6 +177,17 @@ function update_images(show, x, y)
             rune_image[rune]:hide()
         end
     end
+end
+
+function is_legal_job()
+    local main = windower.ffxi.get_player().main_job
+    local sub = windower.ffxi.get_player().sub_job
+
+
+    if main == 'RUN'
+        or sub == 'RUN'
+        or ignore_job then return true
+    else return false end
 end
 
 windower.register_event('load', function()
@@ -264,6 +278,7 @@ windower.register_event('addon command', function(command, ...)
             '  size [n] - set icon size in px',
             '  mode - changes icons to display ability element or resistance element',
             '  orient - changes orientation',
+            '  show - shows the ',
             '  reset - resets display to defaults (does not save)',
             '  save - saves settings',
             ' ',
@@ -314,7 +329,17 @@ windower.register_event('addon command', function(command, ...)
             config.save(settings)
 
         elseif command == 'reset' then
-            settings = defaults
+            settings.draggable = defaults.draggable
+            settings.size = defaults.size
+            settings.resist_colour = defaults.resist_colour
+            settings.orient = defaults.orient
+            settings.pos_x = defaults.pos_x
+            settings.pos_y = defaults.pos_y
+            set_orient()
+            update_images()
+
+        elseif command == 'show' then
+            ignore_job = not ignore_job
             update_images()
 
         else
