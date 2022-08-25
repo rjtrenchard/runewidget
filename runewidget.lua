@@ -224,7 +224,7 @@ end)
 
 
 windower.register_event('mouse', function(type, x, y, delta, blocked)
-    if blocked then
+    if blocked or not is_legal_job() then
         return
     end
 
