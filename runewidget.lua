@@ -165,7 +165,7 @@ function update_images(show, x, y)
 
     if show then
         for i, rune in ipairs(rune_image) do
-            rune_image[rune]:path(element_image[rune_enchantment[rune].resist])
+            rune_image[rune]:path(element_image[rune_enchantment[rune][resist]])
             -- rune_image[rune]:color(rune_colour[rune].r, rune_colour[rune].g, rune_colour[rune].b)
             rune_image[rune]:transparency(0)
             rune_image[rune]:size(settings.size, settings.size)
