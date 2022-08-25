@@ -33,7 +33,7 @@
 _addon.name = "Rune Widget"
 _addon.author = "rjt"
 _addon.version = "1.0"
-_addon.commands = { "rune", "rh" }
+_addon.commands = { "rune", "rw" }
 
 config = require('config')
 images = require('images')
@@ -249,11 +249,11 @@ windower.register_event('mouse', function(type, x, y, delta, blocked)
     return false
 end)
 
-windower.register_event('addon command', function(...)
-    local args = T { ... }
+windower.register_event('addon command', function(command, ...)
+    local argument = ...
 
     local function write(...)
-        for i, v in ipairs(...) do
+        for i, v in ipairs(arg) do
             windower.add_to_chat(144, v)
         end
     end
@@ -268,24 +268,29 @@ windower.register_event('addon command', function(...)
             '  orient - changes orientation')
     end
 
-    if args[0] then
+    if command then
 
-        args[0] = args[0]:lower()
+        command = command:lower()
 
-        if arg[0] == 'lock' then
+        if command == 'lock' then
             settings.draggable = not settings.draggable
+            if settings.draggable then
+                write('runewidget: widget unlocked')
+            else
+                write('runewidget: widget locked')
+            end
             update_images()
             config.save(settings)
 
-        elseif arg[0] == 'size' then
-            if arg[1] and tonumber(arg[1]) then
-                settings.size = tonumber(arg[1])
+        elseif command == 'size' then
+            if argument and tonumber(argument) then
+                settings.size = tonumber(argument)
             else
                 error('unknown argument')
                 return
             end
 
-        elseif arg[0] == 'mode' then
+        elseif command == 'mode' then
             settings.resist_colour = not settings.resist_colour
             if settings.resist_colour then
                 write('runewidget: icons now display the resisting element.')
@@ -295,13 +300,13 @@ windower.register_event('addon command', function(...)
             update_images()
             config.save(settings)
 
-        elseif arg[0] == 'orient' then
+        elseif command == 'orient' then
             flip_orient()
             update_images()
             config.save(settings)
 
-            -- elseif arg[0] == 'text' then
-            -- elseif arg[0] == 'save' then
+            -- elseif command == 'text' then
+            -- elseif command == 'save' then
 
         else
             show_help()
