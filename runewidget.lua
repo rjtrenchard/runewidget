@@ -233,7 +233,6 @@ windower.register_event('mouse', function(type, x, y, delta, blocked)
     elseif type == 5 then
         if settings.draggable and dragging then
             dragging = false
-            config.save(settings)
             return true
         end
 
@@ -261,11 +260,13 @@ windower.register_event('addon command', function(command, ...)
     local function show_help()
         write(
             'runewidget commands:',
-            '  lock - lock widget position',
-            '  right mouse - drags the widget if not locked',
+            '  lock - toggle widget position lock',
             '  size [n] - set icon size in px',
             '  mode - changes icons to display ability element or resistance element',
-            '  orient - changes orientation')
+            '  orient - changes orientation',
+            '  reset - resets display to defaults (does not save)',
+            '  save - saves settings', '',
+            '  right mouse - drags the widget if not locked')
     end
 
     if command then
@@ -280,7 +281,7 @@ windower.register_event('addon command', function(command, ...)
                 write('runewidget: widget locked')
             end
             update_images()
-            config.save(settings)
+
 
         elseif command == 'size' then
             if argument and tonumber(argument) then
@@ -289,6 +290,8 @@ windower.register_event('addon command', function(command, ...)
                 error('unknown argument')
                 return
             end
+            update_images()
+
 
         elseif command == 'mode' then
             settings.resist_colour = not settings.resist_colour
@@ -298,15 +301,20 @@ windower.register_event('addon command', function(command, ...)
                 write('runewidget: icons now display the abilities element.')
             end
             update_images()
-            config.save(settings)
+
 
         elseif command == 'orient' then
             flip_orient()
             update_images()
-            config.save(settings)
 
             -- elseif command == 'text' then
-            -- elseif command == 'save' then
+        elseif command == 'save' then
+            write('runewidget: saving settings')
+            config.save(settings)
+
+        elseif command == 'reset' then
+            settings = defaults
+            update_images()
 
         else
             show_help()
