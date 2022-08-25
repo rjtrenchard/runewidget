@@ -1,6 +1,7 @@
 # RUNEWIDGET
 
-An on-screen clickable widget for using rune enchantments on Final Fantasy XI
+An on-screen clickable widget for using rune enchantments on Final Fantasy XI.
+
 Sleeps if not on rune fencer.
 
 Version: 1.0
