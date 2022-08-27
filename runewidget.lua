@@ -47,16 +47,19 @@ defaults = {
     pos_y = 100,
 
     size = 32, -- pixel size
-    spacing = 3, -- spacing between icons in px
+    spacing_x = 5, -- spacing between icons in px
+    spacing_y = 3,
 
     -- textmode = false,
     resist_colour = true,
-    draggable = true
+    draggable = true,
+    show_background = true
 }
 settings = config.load(defaults)
 dragging = false
 ignore_job = false
 legal_job = false
+mouse_evt_id = nil
 
 rune_enchantment = T {
     ignis = { element = 'fire', resist = 'ice' },
@@ -90,10 +93,17 @@ element_image.water = windower.addon_path .. '/img/Water-Icon.png'
 element_image.light = windower.addon_path .. '/img/Light-Icon.png'
 element_image.dark = windower.addon_path .. '/img/Dark-Icon.png'
 
+bg_image = T {}
+bg_image.idle = windower.addon_path .. '/img/BGSprite.png'
+bg_image.hover = windower.addon_path .. '/img/BGSpriteHover.png'
+bg_image.click = windower.addon_path .. '/img/BGSpriteHover.png' --'/img/BGSpriteClick.png'
+bg_image.disable = windower.addon_path .. '/img/BGSpriteDisable.png'
+
+
 rune_colour = T {}
 if settings.resist_colour then
     for i, rune in ipairs(rune_enchantment) do
-        windower.add_to_chat(144, rune)
+        -- windower.add_to_chat(144, rune)
         rune_colour[rune] = element_colour[rune_enchantment.resist]
     end
 else
@@ -103,6 +113,8 @@ else
 end
 
 rune_image = T {}
+rune_bg = T {}
+rune_state = T {}
 
 -- do
 --     local rune_base = {
@@ -124,10 +136,10 @@ function check_hover(x, y)
 
     if not is_legal_job() then return 'none' end
     for k, v in ipairs(rune_image) do
-        local begin_x = settings.pos_x + orientation.x * k * (settings.size + settings.spacing)
-        local end_x = settings.pos_x + orientation.x * k * (settings.size + settings.spacing) + settings.size
-        local begin_y = settings.pos_y + orientation.y * k * (settings.size + settings.spacing)
-        local end_y = settings.pos_y + orientation.y * k * (settings.size + settings.spacing) + settings.size
+        local begin_x = settings.pos_x + orientation.x * k * (settings.size + settings.spacing_x)
+        local end_x = settings.pos_x + orientation.x * k * (settings.size + settings.spacing_x) + settings.size
+        local begin_y = settings.pos_y + orientation.y * k * (settings.size + settings.spacing_y)
+        local end_y = settings.pos_y + orientation.y * k * (settings.size + settings.spacing_y) + settings.size
         -- windower.add_to_chat(144, '(' .. begin_x .. ',' .. end_x .. '),(' .. begin_y .. ',' .. end_y .. ')')
         if x >= begin_x and x <= end_x and y >= begin_y and y <= end_y then
             return v
@@ -160,35 +172,60 @@ function update_images(show, x, y)
     if x then settings.pos_x = x end
     if y then settings.pos_y = y end
 
-    local resist
-    if settings.resist_colour then resist = 'resist' else resist = 'element' end
-
     if show then
+
+        local resist
+        if settings.resist_colour then resist = 'resist' else resist = 'element' end
+
         for i, rune in ipairs(rune_image) do
+            local image_pos_x = settings.pos_x + orientation.x * i * (settings.size + settings.spacing_x)
+            local image_pos_y = settings.pos_y + orientation.y * i * (settings.size + settings.spacing_y)
+
+            if settings.show_background then
+                rune_bg[rune]:clear()
+                rune_bg[rune]:path(bg_image[rune_state[rune]])
+                rune_bg[rune]:transparency(100)
+                rune_bg[rune]:size(settings.size, settings.size)
+                rune_bg[rune]:pos_x(image_pos_x)
+                rune_bg[rune]:pos_y(image_pos_y)
+                rune_bg[rune]:show()
+            else
+                rune_bg[rune]:clear()
+                rune_bg[rune]:hide()
+            end
+
             rune_image[rune]:path(element_image[rune_enchantment[rune][resist]])
             -- rune_image[rune]:color(rune_colour[rune].r, rune_colour[rune].g, rune_colour[rune].b)
             rune_image[rune]:transparency(0)
             rune_image[rune]:size(settings.size, settings.size)
-            rune_image[rune]:pos_x(settings.pos_x + orientation.x * i * (settings.size + settings.spacing))
-            rune_image[rune]:pos_y(settings.pos_y + orientation.y * i * (settings.size + settings.spacing))
+            rune_image[rune]:pos_x(image_pos_x)
+            rune_image[rune]:pos_y(image_pos_y)
             rune_image[rune]:show()
         end
     else
         for i, rune in ipairs(rune_image) do
+            rune_bg[rune]:clear()
+            rune_bg[rune]:hide()
             rune_image[rune]:clear()
             rune_image[rune]:hide()
+
         end
     end
 end
 
 function is_legal_job()
-    if legal_job or ignore_job then return true
-    else return false end
+    if legal_job or ignore_job then return true end
+    return false
 end
 
 windower.register_event('load', function()
     local rune_base = {
-        color = { alpha = 255 },
+        color = { alpha = 155 },
+        texture = { fit = false },
+        draggable = false,
+    }
+    local bg_base = {
+        color = { alpha = 125 },
         texture = { fit = false },
         draggable = false,
     }
@@ -197,12 +234,19 @@ windower.register_event('load', function()
 
     for i, rune in ipairs(rune_names) do
         rune_image:append(rune)
+        rune_bg:append(rune)
+        rune_state:append(rune)
+
+        rune_bg[rune] = images.new(bg_base)
         rune_image[rune] = images.new(rune_base)
+        rune_state[rune] = 'idle'
+
     end
 
     local player = windower.ffxi.get_player()
     if player.main_job == 'RUN' or player.sub_job == 'RUN' then
         legal_job = true
+        register_mouse_event()
     else
         legal_job = false
     end
@@ -215,64 +259,110 @@ end)
 windower.register_event('job change', function(mid, mlvl, sid, slvl)
     if res.jobs[mid].english_short == 'RUN' or res.jobs[sid].english_short == 'RUN' then
         legal_job = true
+        register_mouse_event()
     else
+        delete_mouse_event()
         legal_job = false
     end
 
     update_images()
 end)
 
-
-windower.register_event('mouse', function(type, x, y, delta, blocked)
-    if blocked or not is_legal_job() then
-        return
+function update_states(rune, state)
+    local send_update = false
+    for k, v in ipairs(rune_state) do
+        local last_state = rune_state[v]
+        if v == rune then
+            rune_state[v] = state
+            if last_state ~= state then send_update = true end
+        else
+            rune_state[v] = 'idle'
+            if last_state ~= state then send_update = true end
+        end
     end
+    if send_update then update_images() end
 
-    -- no button
-    if type == 0 then
-        if dragging == true then
-            update_images(true, x - settings.size / 2, y - settings.size / 2)
-            return true
-        end
-        -- lmb down
-    elseif type == 1 then
-        if check_hover(x, y) ~= 'none' then
-            return true
-        end
+end
 
-        -- lmb up
-    elseif type == 2 then
-        if check_hover(x, y) ~= 'none' then
-            windower.send_command('input /ja ' .. check_hover(x, y) .. ' <me>')
-            return true
+last = 'none'
+function register_mouse_event()
+    if mouse_evt_id then return end
+
+    mouse_evt_id = windower.register_event('mouse', function(type, x, y, delta, blocked)
+        if blocked then
+            return
         end
 
-        -- rmb down
-    elseif type == 4 then
-        if check_hover(x, y) ~= 'none' and settings.draggable then
-            dragging = true
-            return true
+        -- no button
+        if type == 0 then
+            if dragging == true then
+                update_images(true, x - settings.size / 2, y - settings.size / 2)
+                return true
+                -- else
+                --     local hover_name = check_hover(x, y)
+                --     if hover_name ~= 'none' then
+                --         update_states(hover_name, 'hover')
+                --         last = hover_name
+                --     elseif last ~= 'none' then
+                --         update_states()
+                --         last = 'none'
+                --     end
+            end
+
+            -- lmb down
+        elseif type == 1 then
+            local hover_name = check_hover(x, y)
+            if hover_name ~= 'none' then
+                update_states(hover_name, 'click')
+                return true
+            end
+
+            -- lmb up
+        elseif type == 2 then
+            local hover_name = check_hover(x, y)
+            update_states()
+            if hover_name ~= 'none' then
+                windower.send_command('input /ja ' .. hover_name .. ' <me>')
+                return true
+            end
+
+            -- rmb down
+        elseif type == 4 then
+            local hover_name = check_hover(x, y)
+            if hover_name ~= 'none' and settings.draggable then
+                dragging = true
+                return true
+            end
+
+
+            -- rmb up
+        elseif type == 5 then
+            if settings.draggable and dragging then
+                dragging = false
+                return true
+            end
+
+            -- elseif type == 7 then
+            --     flip_orient()
+            --     update_images()
+            --     return true
         end
 
+        -- if type ~= 0 then
+        --     windower.add_to_chat(144, type)
+        -- end
+        return false
+    end)
+end
 
-        -- rmb up
-    elseif type == 5 then
-        if settings.draggable and dragging then
-            dragging = false
-            return true
-        end
-
-        -- elseif type == 7 then
-        --     flip_orient()
-        --     update_images()
-        --     return true
+function delete_mouse_event()
+    if ignore_job then
+        register_mouse_event()
+    else
+        windower.unregister_event(mouse_evt_id)
+        mouse_evt_id = nil
     end
-
-    -- if type ~= 0 then
-    --     windower.add_to_chat(144, type)
-    -- end
-    return false
-end)
+end
 
 windower.register_event('addon command', function(command, ...)
     local argument = ...
@@ -286,7 +376,7 @@ windower.register_event('addon command', function(command, ...)
     local function show_help()
         write(
             'runewidget commands:',
-            '  lock - toggle widget position lock',
+            '  lock - toggle dragging',
             '  size [n] - set icon size in px',
             '  mode - changes icons to display ability element or resistance element',
             '  orient - changes orientation',
@@ -352,6 +442,7 @@ windower.register_event('addon command', function(command, ...)
 
         elseif command == 'show' then
             ignore_job = not ignore_job
+            if ignore_job then register_mouse_event() else delete_mouse_event() end
             update_images()
 
         else
