@@ -288,6 +288,7 @@ last = 'none'
 function register_mouse_event()
     if mouse_evt_id then return end
 
+    last = 'none'
     mouse_evt_id = windower.register_event('mouse', function(type, x, y, delta, blocked)
         if blocked then
             return
