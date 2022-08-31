@@ -360,7 +360,9 @@ function delete_mouse_event()
     if ignore_job then
         register_mouse_event()
     else
-        windower.unregister_event(mouse_evt_id)
+        if mouse_evt_id then
+            windower.unregister_event(mouse_evt_id)
+        end
         mouse_evt_id = nil
     end
 end
