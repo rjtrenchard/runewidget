@@ -338,10 +338,7 @@ function register_mouse_event()
 
             -- rmb up
         elseif type == 5 then
-            if settings.draggable and dragging then
-                dragging = false
-                return true
-            end
+            dragging = false
 
             -- elseif type == 7 then
             --     flip_orient()
