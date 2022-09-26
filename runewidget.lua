@@ -243,8 +243,9 @@ windower.register_event('load', function()
 
     end
 
+
     local player = windower.ffxi.get_player()
-    if player.main_job == 'RUN' or player.sub_job == 'RUN' then
+    if player and (player.main_job == 'RUN' or player.sub_job == 'RUN') then
         legal_job = true
         register_mouse_event()
     else
@@ -254,6 +255,16 @@ windower.register_event('load', function()
     set_orient()
     update_images()
 
+end)
+
+windower.register_event('login', function()
+    local player = windower.ffxi.get_player()
+    if player and (player.main_job == 'RUN' or player.sub_job == 'RUN') then
+        legal_job = true
+        register_mouse_event()
+    else
+        legal_job = false
+    end
 end)
 
 windower.register_event('job change', function(mid, mlvl, sid, slvl)
@@ -267,6 +278,8 @@ windower.register_event('job change', function(mid, mlvl, sid, slvl)
 
     update_images()
 end)
+
+
 
 function update_states(rune, state)
     local send_update = false
