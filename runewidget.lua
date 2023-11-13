@@ -46,7 +46,7 @@ defaults = {
     pos_x = 100,
     pos_y = 100,
 
-    size = 32, -- pixel size
+    size = 32,     -- pixel size
     spacing_x = 5, -- spacing between icons in px
     spacing_y = 3,
 
@@ -133,7 +133,6 @@ rune_state = T {}
 
 -- check if hovering over a rune
 function check_hover(x, y)
-
     if not is_legal_job() then return 'none' end
     for k, v in ipairs(rune_image) do
         local begin_x = settings.pos_x + orientation.x * k * (settings.size + settings.spacing_x)
@@ -146,7 +145,6 @@ function check_hover(x, y)
         end
     end
     return 'none'
-
 end
 
 orientation = {}
@@ -166,14 +164,12 @@ function flip_orient()
 end
 
 function update_images(show, x, y)
-
     if show == nil then show = true end
     if not is_legal_job() then show = false end
     if x then settings.pos_x = x end
     if y then settings.pos_y = y end
 
     if show then
-
         local resist
         if settings.resist_colour then resist = 'resist' else resist = 'element' end
 
@@ -208,7 +204,6 @@ function update_images(show, x, y)
             rune_bg[rune]:hide()
             rune_image[rune]:clear()
             rune_image[rune]:hide()
-
         end
     end
 end
@@ -240,7 +235,6 @@ windower.register_event('load', function()
         rune_bg[rune] = images.new(bg_base)
         rune_image[rune] = images.new(rune_base)
         rune_state[rune] = 'idle'
-
     end
 
 
@@ -254,7 +248,6 @@ windower.register_event('load', function()
 
     set_orient()
     update_images()
-
 end)
 
 windower.register_event('login', function()
@@ -265,6 +258,12 @@ windower.register_event('login', function()
     else
         legal_job = false
     end
+end)
+
+windower.register_event('logout', function()
+    legal_job = false
+    delete_mouse_event()
+    update_images()
 end)
 
 windower.register_event('job change', function(mid, mlvl, sid, slvl)
@@ -294,7 +293,6 @@ function update_states(rune, state)
         end
     end
     if send_update then update_images() end
-
 end
 
 last = 'none'
@@ -405,7 +403,6 @@ windower.register_event('addon command', function(command, ...)
     end
 
     if command then
-
         command = command:lower()
 
         if command == 'lock' then
@@ -416,8 +413,6 @@ windower.register_event('addon command', function(command, ...)
                 write('runewidget: widget locked')
             end
             update_images()
-
-
         elseif command == 'size' then
             if argument and tonumber(argument) then
                 settings.size = tonumber(argument)
@@ -426,8 +421,6 @@ windower.register_event('addon command', function(command, ...)
                 return
             end
             update_images()
-
-
         elseif command == 'mode' then
             settings.resist_colour = not settings.resist_colour
             if settings.resist_colour then
@@ -436,8 +429,6 @@ windower.register_event('addon command', function(command, ...)
                 write('runewidget: icons now display the abilities element.')
             end
             update_images()
-
-
         elseif command == 'orient' then
             flip_orient()
             update_images()
@@ -446,7 +437,6 @@ windower.register_event('addon command', function(command, ...)
         elseif command == 'save' then
             write('runewidget: saving settings')
             config.save(settings)
-
         elseif command == 'reset' then
             settings.draggable = defaults.draggable
             settings.size = defaults.size
@@ -456,18 +446,14 @@ windower.register_event('addon command', function(command, ...)
             settings.pos_y = defaults.pos_y
             set_orient()
             update_images()
-
         elseif command == 'show' then
             ignore_job = not ignore_job
             if ignore_job then register_mouse_event() else delete_mouse_event() end
             update_images()
-
         else
             show_help()
         end
-
     else
         show_help()
     end
-
 end)
